@@ -187,4 +187,27 @@ export const MARKETPLACE_ABI = [
     "stateMutability": "view",
     "type": "function"
   }
-]; 
+];
+
+export const ERC721_ABI = [
+  {
+    name: 'setApprovalForAll',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'operator', type: 'address' },
+      { name: 'approved', type: 'bool' }
+    ],
+    outputs: []
+  },
+  {
+    name: 'isApprovedForAll',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'operator', type: 'address' }
+    ],
+    outputs: [{ name: '', type: 'bool' }]
+  }
+] as const; 

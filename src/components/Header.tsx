@@ -53,6 +53,15 @@ export default function Header() {
                         >
                             NFT
                         </Link>
+                        <Link
+                            href="/portfolio"
+                            className={`px-3 py-2 rounded-md ${isActive('/nft')
+                                    ? 'bg-blue-100 text-blue-600'
+                                    : 'text-gray-600 hover:text-blue-600'
+                                }`}
+                        >
+                          Portfolio
+                        </Link>
                         <Link 
                             href="/deploy-factory" 
                             className={`px-3 py-2 rounded-md ${

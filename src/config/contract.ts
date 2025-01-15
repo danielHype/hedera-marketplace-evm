@@ -9,6 +9,6 @@ export const NETWORK_CONFIG = {
         symbol: 'HBAR',
         decimals: 18
     },
-    rpcUrls: ['https://testnet.hashio.io/api'],
+    rpcUrls: ['https://296.rpc.thirdweb.com'],
     blockExplorerUrls: ['https://hashscan.io/testnet']
 }; 

@@ -9,10 +9,10 @@ export const HEDERA_TESTNET = {
   },
   rpcUrls: {
     default: {
-      http: ['https://testnet.hashio.io/api']
+      http: ['https://296.rpc.thirdweb.com']
     },
     public: {
-      http: ['https://testnet.hashio.io/api']
+      http: ['https://296.rpc.thirdweb.com']
     }
   },
   blockExplorers: {

@@ -23,23 +23,6 @@ const NFT_ABI = [
   }
 ] as const;
 
-// Helper function to convert address to Hedera contract ID
-function addressToContractId(address: string): string {
-  try {
-    // Remove '0x' prefix
-    const cleanAddress = address.toLowerCase().replace('0x', '');
-    
-    // Convert to decimal and ensure it's a regular number
-    const contractNum = parseInt(cleanAddress, 16);
-    
-    // Format as shard.realm.num
-    return `0.0.${contractNum}`;
-  } catch (err) {
-    console.error('Error converting address to contract ID:', err);
-    return 'Invalid Address';
-  }
-}
-
 const NFTPage = () => {
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -47,35 +30,23 @@ const NFTPage = () => {
   const [symbol, setSymbol] = useState('');
   const [baseURI, setBaseURI] = useState('');
   const [contractAddress, setContractAddress] = useState('');
-  const [contractId, setContractId] = useState('');
-  const [existingContractId, setExistingContractId] = useState('');
+  const [existingAddress, setExistingAddress] = useState('');
   const [mode, setMode] = useState<'create' | 'existing'>('create');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Convert Hedera Contract ID to EVM address
-  const contractIdToAddress = (contractId: string): string => {
-    try {
-      const [shard, realm, num] = contractId.split('.');
-      const address = `0x${Number(num).toString(16).padStart(40, '0')}`;
-      return address;
-    } catch (err) {
-      console.error('Error converting contract ID to address:', err);
-      throw new Error('Invalid Contract ID format');
-    }
-  };
-
   const handleExistingContract = () => {
     try {
-      if (!existingContractId) {
-        throw new Error('Please enter a contract ID');
+      if (!existingAddress) {
+        throw new Error('Please enter a contract address');
       }
-      const address = contractIdToAddress(existingContractId);
-      setContractAddress(address);
-      setContractId(existingContractId);
-      setSuccess(`Connected to NFT contract: ${existingContractId}`);
+      if (!existingAddress.startsWith('0x')) {
+        throw new Error('Address must start with 0x');
+      }
+      setContractAddress(existingAddress as `0x${string}`);
+      setSuccess(`Connected to NFT contract: ${existingAddress}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid contract ID');
+      setError(err instanceof Error ? err.message : 'Invalid address');
     }
   };
 
@@ -122,9 +93,7 @@ const NFTPage = () => {
 
             const nftContract = decodedEvent.args.nftContract as `0x${string}`;
             setContractAddress(nftContract);
-            const hederaId = addressToContractId(nftContract);
-            setContractId(hederaId);
-            setSuccess(`NFT Contract deployed successfully!\nContract ID: ${hederaId}`);
+            setSuccess(`NFT Contract deployed successfully!\nContract Address: ${nftContract}`);
           } else {
             console.log('No deployment event found in logs');
             setError('Contract deployed but unable to find contract address');
@@ -184,7 +153,7 @@ const NFTPage = () => {
       setError('');
       console.log('Starting deployment with args:', { name, symbol, baseURI });
       
-      await deployNFT({
+      deployNFT({
         address: process.env.NEXT_PUBLIC_FACTORY_ADDRESS as `0x${string}`,
         abi: FACTORY_ABI,
         functionName: 'deployNFT',
@@ -204,7 +173,7 @@ const NFTPage = () => {
 
     try {
       setError('');
-      await mintNFT({
+      mintNFT({
         address: contractAddress as `0x${string}`,
         abi: NFT_ABI,
         functionName: 'mint',
@@ -298,15 +267,15 @@ const NFTPage = () => {
               <div className="space-y-4">
                 <input
                   type="text"
-                  placeholder="Contract ID (e.g., 0.0.1234)"
+                  placeholder="Contract Address (0x...)"
                   className="w-full p-2 border rounded"
-                  value={existingContractId}
-                  onChange={(e) => setExistingContractId(e.target.value)}
+                  value={existingAddress}
+                  onChange={(e) => setExistingAddress(e.target.value)}
                 />
                 <button
                   onClick={handleExistingContract}
                   className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
-                  disabled={!existingContractId}
+                  disabled={!existingAddress}
                 >
                   Connect to Contract
                 </button>
@@ -320,7 +289,6 @@ const NFTPage = () => {
             <h2 className="text-xl font-semibold mb-4">Contract Details</h2>
             <div className="space-y-2 mb-6">
               <p><strong>Contract Address:</strong> {contractAddress}</p>
-              <p><strong>Contract ID:</strong> {contractId}</p>
             </div>
             <h3 className="text-lg font-semibold mb-2">Mint NFT</h3>
             <button
