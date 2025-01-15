@@ -1,101 +1,214 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import { useState, useEffect } from 'react';
+import { useAppKitAccount } from '@reown/appkit/react';
+import Header from '../components/Header';
+import { useCreateListing, useGetListing, useBuyListing, useCancelListing } from '../utils/contractFunctions';
+import { parseEther, formatEther } from 'viem';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
-}
+export default function HomePage() {
+    const { address, isConnected } = useAppKitAccount();
+    const [listingId, setListingId] = useState<number>(0);
+    const [tokenId, setTokenId] = useState<number>(0);
+    const [amount, setAmount] = useState<number>(0);
+    const [price, setPrice] = useState<string>('0');
+    const [error, setError] = useState<string>('');
+    const [success, setSuccess] = useState<string>('');
+
+    // Contract hooks
+    const { createListing, isLoading: isCreating, isSuccess: createSuccess } = useCreateListing();
+    const { listing, isLoading: isLoadingListing } = useGetListing(listingId);
+    const { buyListing, isLoading: isBuying, isSuccess: buySuccess } = useBuyListing();
+    const { cancelListing, isLoading: isCanceling, isSuccess: cancelSuccess } = useCancelListing();
+
+    // Clear success/error messages when success states change
+    useEffect(() => {
+        if (createSuccess || buySuccess || cancelSuccess) {
+            setError('');
+            setSuccess(
+                createSuccess ? 'Listing created successfully!' :
+                buySuccess ? 'Item purchased successfully!' :
+                'Listing cancelled successfully!'
+            );
+        }
+    }, [createSuccess, buySuccess, cancelSuccess]);
+
+    const handleCreateListing = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!isConnected || !address || !createListing) return;
+
+        try {
+            await createListing({
+                args: [BigInt(tokenId), BigInt(amount), parseEther(price)],
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create listing');
+        }
+    };
+
+    const handleBuyListing = async (id: number) => {
+        if (!isConnected || !address || !listing || !buyListing) return;
+
+        try {
+            await buyListing({
+                args: [BigInt(id)],
+                value: listing.price,
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to buy item');
+        }
+    };
+
+    const handleCancelListing = async (id: number) => {
+        if (!isConnected || !address || !cancelListing) return;
+
+        try {
+            await cancelListing({
+                args: [BigInt(id)],
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to cancel listing');
+        }
+    };
+
+    return (
+        <>
+            <Header />
+            <main className="min-h-screen p-8">
+                <div className="max-w-2xl mx-auto space-y-8">
+                    <h1 className="text-4xl font-bold mb-8">Game Items Marketplace</h1>
+
+                    {error && (
+                        <div className="p-4 mb-4 bg-red-100 text-red-700 rounded">
+                            {error}
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="p-4 mb-4 bg-green-100 text-green-700 rounded">
+                            {success}
+                        </div>
+                    )}
+
+                    {address ? (
+                        <div className="space-y-8">
+                            {/* Create Listing Form */}
+                            <div className="p-6 border rounded-lg">
+                                <h2 className="text-xl font-bold mb-4">Create New Listing</h2>
+                                <form onSubmit={handleCreateListing} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Token ID</label>
+                                        <input
+                                            type="number"
+                                            value={tokenId}
+                                            onChange={(e) => setTokenId(Number(e.target.value))}
+                                            className="w-full p-2 border rounded"
+                                            min="0"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Amount</label>
+                                        <input
+                                            type="number"
+                                            value={amount}
+                                            onChange={(e) => setAmount(Number(e.target.value))}
+                                            className="w-full p-2 border rounded"
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Price (in ETH)</label>
+                                        <input
+                                            type="text"
+                                            value={price}
+                                            onChange={(e) => setPrice(e.target.value)}
+                                            className="w-full p-2 border rounded"
+                                            pattern="^[0-9]*[.,]?[0-9]*$"
+                                            required
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={isCreating}
+                                        className={`w-full p-3 rounded text-white font-bold ${
+                                            isCreating
+                                                ? 'bg-blue-300'
+                                                : 'bg-blue-500 hover:bg-blue-600'
+                                        }`}
+                                    >
+                                        {isCreating ? 'Creating...' : 'Create Listing'}
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* View Listing */}
+                            <div className="p-6 border rounded-lg">
+                                <h2 className="text-xl font-bold mb-4">View Listing</h2>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Listing ID</label>
+                                        <input
+                                            type="number"
+                                            value={listingId}
+                                            onChange={(e) => setListingId(Number(e.target.value))}
+                                            className="w-full p-2 border rounded"
+                                            min="0"
+                                        />
+                                    </div>
+                                    
+                                    {isLoadingListing ? (
+                                        <p>Loading listing...</p>
+                                    ) : listing ? (
+                                        <div className="space-y-2">
+                                            <p><strong>Seller:</strong> {listing.seller}</p>
+                                            <p><strong>Token ID:</strong> {Number(listing.tokenId)}</p>
+                                            <p><strong>Amount:</strong> {Number(listing.amount)}</p>
+                                            <p><strong>Price:</strong> {formatEther(listing.price)} ETH</p>
+                                            <p><strong>Active:</strong> {listing.active ? 'Yes' : 'No'}</p>
+                                            
+                                            <div className="flex space-x-4">
+                                                <button
+                                                    onClick={() => handleBuyListing(listingId)}
+                                                    disabled={isBuying || !listing.active}
+                                                    className={`flex-1 p-3 rounded text-white font-bold ${
+                                                        isBuying || !listing.active
+                                                            ? 'bg-gray-300'
+                                                            : 'bg-green-500 hover:bg-green-600'
+                                                    }`}
+                                                >
+                                                    {isBuying ? 'Buying...' : 'Buy'}
+                                                </button>
+                                                
+                                                {listing.seller === address && (
+                                                    <button
+                                                        onClick={() => handleCancelListing(listingId)}
+                                                        disabled={isCanceling || !listing.active}
+                                                        className={`flex-1 p-3 rounded text-white font-bold ${
+                                                            isCanceling || !listing.active
+                                                                ? 'bg-gray-300'
+                                                                : 'bg-red-500 hover:bg-red-600'
+                                                        }`}
+                                                    >
+                                                        {isCanceling ? 'Canceling...' : 'Cancel'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p>No listing found</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-lg text-gray-600">Please connect your wallet to use the marketplace.</p>
+                        </div>
+                    )}
+                </div>
+            </main>
+        </>
+    );
+} 

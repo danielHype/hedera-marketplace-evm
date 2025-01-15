@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { deployGameItems } from '../../src/utils/deploy';
-import Header from '../../src/components/Header';
+import { deployGameItems } from '../../utils/deploy';
+import Header from '../../components/Header';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useSignMessage, useDeployContract } from 'wagmi';
 import { type Address } from 'viem';
