@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, useContractWrite } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { useSearchParams } from 'next/navigation';
-import Header from '@/components/Header';
+import { Layout } from '@/components/Layout';
 import { useCreateListing } from '@/utils/contractFunctions';
 import { ethers } from 'ethers';
 import { MARKETPLACE_ABI } from '@/config/abi';
@@ -43,6 +43,7 @@ const ListNFTPage = () => {
 
     try {
       setError('');
+      setSuccess(''); // Clear any previous success messages
       console.log('Checking approval status:', isApproved);
 
       // Check and handle approval if needed
@@ -62,30 +63,26 @@ const ListNFTPage = () => {
       console.log('NFT is approved, creating listing...');
       const priceInWei = ethers.parseEther(price);
       const startTime = Math.floor(Date.now() / 1000);
-      const endTime = startTime + (30 * 24 * 60 * 60);
+      const endTime = startTime + (30 * 24 * 60 * 60); // 30 days from now
 
-      console.log('Creating listing with params:', {
-        assetContract: contractAddress,
-        tokenId,
-        price: priceInWei.toString(),
-        startTime,
-        endTime
-      });
+      const listingParams = {
+        assetContract: contractAddress as `0x${string}`,
+        tokenId: BigInt(tokenId),
+        quantity: BigInt(1),
+        currency: '0x0000000000000000000000000000000000000000' as `0x${string}`, // Zero address for native token
+        pricePerToken: priceInWei,
+        startTimestamp: BigInt(startTime),
+        endTimestamp: BigInt(endTime),
+        reserved: false
+      };
 
-      await createListing?.({
+      console.log('Creating listing with params:', listingParams);
+
+      await createListing({
         address: process.env.NEXT_PUBLIC_MARKETPLACE_CONTRACT as `0x${string}`,
         abi: MARKETPLACE_ABI,
         functionName: 'createListing',
-        args: [{
-          assetContract: contractAddress as `0x${string}`,
-          tokenId: BigInt(tokenId),
-          quantity: 1n,
-          currency: ethers.ZeroAddress,
-          pricePerToken: priceInWei,
-          startTimestamp: BigInt(startTime),
-          endTimestamp: BigInt(endTime),
-          reserved: false
-        }]
+        args: [listingParams]
       });
 
     } catch (err) {
@@ -118,8 +115,7 @@ const ListNFTPage = () => {
   }, [approvalHash, isApproved]);
 
   return (
-    <>
-      <Header />
+   <Layout>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">List NFT for Sale</h1>
 
@@ -183,7 +179,7 @@ const ListNFTPage = () => {
           )}
         </div>
       </div>
-    </>
+    </Layout>
   );
 };
 

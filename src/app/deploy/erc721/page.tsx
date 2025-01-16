@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWatchContractEvent, usePublicClient } from 'wagmi';
-import Header from '@/components/Header';
+import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
+import { Layout } from '@/components/Layout';
 import { FACTORY_ABI } from '@/contracts/bytecode';
-import { parseAbiItem, decodeEventLog } from 'viem';
+import { decodeEventLog } from 'viem';
 
 const NFT_ABI = [
   {
@@ -186,8 +186,8 @@ const NFTPage = () => {
   };
 
   return (
-    <>
-      <Header />
+    
+      <Layout>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">NFT Contract Interaction</h1>
         
@@ -308,7 +308,7 @@ const NFTPage = () => {
           </div>
         )}
       </div>
-    </>
+          </Layout>
   );
 };
 

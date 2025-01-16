@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { createPublicClient, http, defineChain } from 'viem';
-import Header from '@/components/Header';
+import { Layout } from '@/components/Layout';
 import Link from 'next/link';
 
 interface NFT {
@@ -147,6 +147,7 @@ const PortfolioPage = () => {
       try {
         // For testing, let's hardcode the contract address
         const testContract = '0x615DFE73D29ed828FE9968231E1E985F10713543';
+          // second contract: 0xd3c87b49F84868D604b0d40161CA4Fb2186f405b
         console.log('Checking contract:', testContract);
         
         const contractNFTs = await fetchNFTsForContract(testContract);
@@ -164,8 +165,7 @@ const PortfolioPage = () => {
   }, [address]);
 
   return (
-    <>
-      <Header />
+    <Layout>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">My NFT Portfolio</h1>
 
@@ -224,7 +224,7 @@ const PortfolioPage = () => {
           </div>
         )}
       </div>
-    </>
+      </Layout>
   );
 };
 

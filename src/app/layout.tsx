@@ -6,7 +6,7 @@ import { Web3ModalProvider } from '../components/Web3ModalProvider'
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">

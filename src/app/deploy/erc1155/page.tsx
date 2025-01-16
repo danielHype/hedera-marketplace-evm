@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { deployGameItems } from '../../utils/deploy';
-import Header from '../../components/Header';
+import { deployGameItems } from '../../../utils/deploy';
+import { Layout } from '@/components/Layout';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useSignMessage, useDeployContract } from 'wagmi';
 import { type Address } from 'viem';
 
-export default function DeployFactoryPage() {
+export default function DeployPage() {
     const { address, isConnected } = useAppKitAccount();
     const { signMessageAsync } = useSignMessage();
     const { deployContractAsync } = useDeployContract();
@@ -25,7 +25,7 @@ export default function DeployFactoryPage() {
 
         try {
             // First sign the deployment message
-            const message = 'Deploy NFT Factory contract';
+            const message = 'Deploy GameItems contract';
             await signMessageAsync({ message, account: address as Address });
 
             // Then deploy the contract
@@ -36,17 +36,20 @@ export default function DeployFactoryPage() {
                 args: []
             });
 
-            console.log('Factory deployed successfully!');
-            setSuccess(`NFT Factory contract deployed successfully! Transaction hash: ${hash}`);
+            console.log('Contract deployed successfully!');
+            setSuccess(`GameItems contract deployed successfully! Transaction hash: ${hash}`);
         } catch (err) {
             console.error('Deployment error:', err);
             let errorMessage = 'Failed to deploy contract';
             
             if (err instanceof Error) {
-                if (err.message.includes('user rejected')) {
-                    errorMessage = 'Transaction was rejected by user';
+                // Check for specific error messages
+                if (err.message.includes('require(false)')) {
+                    errorMessage = 'Contract deployment failed: Constructor requirements not met';
                 } else if (err.message.includes('insufficient funds')) {
                     errorMessage = 'Insufficient funds to deploy contract';
+                } else if (err.message.includes('user rejected')) {
+                    errorMessage = 'Transaction was rejected by user';
                 } else {
                     errorMessage = err.message;
                 }
@@ -59,11 +62,10 @@ export default function DeployFactoryPage() {
     };
 
     return (
-        <>
-            <Header />
+      <Layout>
             <main className="min-h-screen p-8">
                 <div className="max-w-2xl mx-auto">
-                    <h1 className="text-4xl font-bold mb-8">Deploy NFT Factory</h1>
+                    <h1 className="text-4xl font-bold mb-8">Deploy GameItems Contract</h1>
 
                     {error && (
                         <div className="p-4 mb-4 bg-red-100 text-red-700 rounded">
@@ -79,25 +81,28 @@ export default function DeployFactoryPage() {
 
                     {address ? (
                         <div className="p-6 border rounded-lg">
-                            <h2 className="text-xl font-bold mb-4">Factory Contract Details</h2>
+                            <h2 className="text-xl font-bold mb-4">Contract Details</h2>
                             <p className="mb-4 text-gray-600">
-                                This will deploy the NFT Factory contract that allows:
+                                This contract will deploy a GameItems collection with the following tokens:
                             </p>
                             <ul className="list-disc pl-5 mb-6 space-y-2">
-                                <li>Users to create their own NFT collections</li>
-                                <li>Customizable NFT name and symbol</li>
-                                <li>Configurable base URI for NFT metadata</li>
-                                <li>Full ERC721 compatibility</li>
+                                <li>GOLD (ID: 0) - 1,000,000,000,000,000,000 tokens</li>
+                                <li>SILVER (ID: 1) - 1,000,000,000,000,000,000,000,000,000 tokens</li>
+                                <li>THOR&apos;S HAMMER (ID: 2) - 1 token</li>
+                                <li>SWORD (ID: 3) - 1,000,000,000 tokens</li>
+                                <li>SHIELD (ID: 4) - 1,000,000,000 tokens</li>
                             </ul>
 
                             <button
                                 onClick={handleDeploy}
                                 disabled={loading}
                                 className={`w-full p-3 rounded text-white font-bold ${
-                                    loading ? 'bg-blue-300' : 'bg-blue-500 hover:bg-blue-600'
+                                    loading
+                                        ? 'bg-blue-300'
+                                        : 'bg-blue-500 hover:bg-blue-600'
                                 }`}
                             >
-                                {loading ? 'Deploying...' : 'Deploy Factory'}
+                                {loading ? 'Deploying...' : 'Deploy Contract'}
                             </button>
                         </div>
                     ) : (
@@ -107,6 +112,6 @@ export default function DeployFactoryPage() {
                     )}
                 </div>
             </main>
-        </>
+        </Layout>
     );
 } 
